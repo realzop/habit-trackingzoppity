@@ -1,0 +1,266 @@
+async function renderSettings() {
+    const app = document.getElementById('app');
+    app.innerHTML = '<div class="spinner" style="margin:40px auto;display:block"></div>';
+
+    try {
+        const [settings, habits] = await Promise.all([
+            API.getSettings(),
+            API.getHabitList()
+        ]);
+
+        const theme = settings.theme || 'dark';
+
+        app.innerHTML = `
+            <div class="page-header">
+                <h1 class="page-title">Settings</h1>
+            </div>
+
+            <div class="settings-section">
+                <h3>Theme</h3>
+                <div class="theme-grid">
+                    <button class="theme-option ${theme === 'dark' ? 'selected' : ''}" data-theme="dark">DayCore Dark</button>
+                    <button class="theme-option ${theme === 'purple' ? 'selected' : ''}" data-theme="purple">Midnight Purple</button>
+                    <button class="theme-option ${theme === 'green' ? 'selected' : ''}" data-theme="green">Terminal Green</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Change Password</h3>
+                <div class="card">
+                    <div id="pw-msg"></div>
+                    <div class="input-group">
+                        <label class="input-label">Current Password</label>
+                        <input type="password" id="pw-current" class="input" placeholder="Current password">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">New Password</label>
+                        <input type="password" id="pw-new" class="input" placeholder="New password">
+                    </div>
+                    <button id="pw-btn" class="btn btn-secondary">Update Password</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>OpenAI API Key</h3>
+                <div class="card">
+                    <div id="api-msg"></div>
+                    <div class="input-group">
+                        <label class="input-label">API Key (for AI Review)</label>
+                        <input type="password" id="api-key" class="input" placeholder="sk-..." value="${settings.openai_api_key || ''}">
+                    </div>
+                    <button id="api-btn" class="btn btn-secondary">Save API Key</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Habit Manager</h3>
+                <div id="habit-manager"></div>
+                <div style="margin-top:12px">
+                    <h3 style="margin-bottom:8px;font-size:0.8rem;color:var(--text-dim)">Add New Habit</h3>
+                    <div class="add-habit-form">
+                        <input type="text" id="new-habit-name" class="input" placeholder="Habit name">
+                        <select id="new-habit-type" class="select">
+                            <option value="boolean">Toggle</option>
+                            <option value="number">Number</option>
+                        </select>
+                        <button id="add-habit-btn" class="btn btn-secondary" style="width:auto;padding:10px 16px">Add</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Data Management</h3>
+                <div class="card">
+                    <div id="data-msg"></div>
+                    <div class="data-actions">
+                        <button id="backup-btn" class="btn btn-secondary">Download Backup</button>
+                        <label class="btn btn-secondary import-label" for="import-file">Import Backup</label>
+                        <input type="file" id="import-file" accept=".json" style="display:none">
+                    </div>
+                    <p style="margin-top:10px;font-size:0.75rem;color:var(--text-dim)">
+                        Backup exports all your habits, logs, notes, and settings as JSON. Import merges data without overwriting existing entries.
+                    </p>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Maintenance</h3>
+                <div class="card">
+                    <div id="reset-msg"></div>
+                    <button id="force-refresh-btn" class="btn btn-secondary" style="margin-bottom:8px">Force Refresh App</button>
+                    <p style="font-size:0.75rem;color:var(--text-dim)">
+                        Clears cached files and reloads the app. Use this after an update if features are missing. Your data is never touched.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        // Theme switching
+        document.querySelectorAll('.theme-option').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const t = btn.dataset.theme;
+                document.querySelectorAll('.theme-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                applyTheme(t);
+                await API.updateSettings([{ key: 'theme', value: t }]);
+            });
+        });
+
+        // Password change
+        document.getElementById('pw-btn').addEventListener('click', async () => {
+            const msg = document.getElementById('pw-msg');
+            try {
+                await API.changePassword(
+                    document.getElementById('pw-current').value,
+                    document.getElementById('pw-new').value
+                );
+                msg.innerHTML = '<div class="msg msg-success">Password updated</div>';
+                document.getElementById('pw-current').value = '';
+                document.getElementById('pw-new').value = '';
+            } catch (e) {
+                msg.innerHTML = `<div class="msg msg-error">${e.message}</div>`;
+            }
+        });
+
+        // API key
+        document.getElementById('api-btn').addEventListener('click', async () => {
+            const msg = document.getElementById('api-msg');
+            const key = document.getElementById('api-key').value;
+            try {
+                await API.updateSettings([{ key: 'openai_api_key', value: key }]);
+                msg.innerHTML = '<div class="msg msg-success">API key saved</div>';
+            } catch (e) {
+                msg.innerHTML = `<div class="msg msg-error">${e.message}</div>`;
+            }
+        });
+
+        // Habit manager
+        renderHabitManager(habits);
+
+        // Backup
+        document.getElementById('backup-btn').addEventListener('click', async () => {
+            const msg = document.getElementById('data-msg');
+            try {
+                const res = await API.backupData();
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `daycore_backup_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                msg.innerHTML = '<div class="msg msg-success">Backup downloaded</div>';
+            } catch (e) {
+                msg.innerHTML = `<div class="msg msg-error">${e.message}</div>`;
+            }
+        });
+
+        // Import
+        document.getElementById('import-file').addEventListener('change', async (e) => {
+            const msg = document.getElementById('data-msg');
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                const result = await API.importData(data);
+                const imp = result.imported;
+                msg.innerHTML = `<div class="msg msg-success">Imported: ${imp.habits} habits, ${imp.logs} logs, ${imp.notes} notes, ${imp.settings} settings</div>`;
+                e.target.value = '';
+            } catch (err) {
+                msg.innerHTML = `<div class="msg msg-error">${err.message}</div>`;
+                e.target.value = '';
+            }
+        });
+
+        // Force refresh
+        document.getElementById('force-refresh-btn').addEventListener('click', () => {
+            if ('caches' in window) {
+                caches.keys().then(names => names.forEach(name => caches.delete(name)));
+            }
+            window.location.reload(true);
+        });
+
+        // Add habit
+        document.getElementById('add-habit-btn').addEventListener('click', async () => {
+            const name = document.getElementById('new-habit-name').value.trim();
+            const type = document.getElementById('new-habit-type').value;
+            if (!name) return;
+            const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+            habits.push({
+                key, name, habit_type: type, emoji: '', goal: null,
+                sort_order: habits.length, active: true, version: 'custom'
+            });
+            await API.updateHabitList(habits);
+            document.getElementById('new-habit-name').value = '';
+            renderHabitManager(habits);
+        });
+
+    } catch (e) {
+        if (e.message !== 'Not authenticated') {
+            app.innerHTML = `<div class="msg msg-error">${e.message}</div>`;
+        }
+    }
+}
+
+function renderHabitManager(habits) {
+    const container = document.getElementById('habit-manager');
+    container.innerHTML = habits.map((h, i) => `
+        <div class="habit-manager-item" data-index="${i}">
+            <span class="handle">&#9776;</span>
+            <span class="habit-manager-name">${h.emoji || ''} ${h.name}</span>
+            <span class="habit-manager-type">${h.habit_type}</span>
+            <span class="habit-manager-type">${h.version}</span>
+            <button class="habit-manager-toggle ${h.active ? 'on' : ''}" data-index="${i}"></button>
+            <button class="habit-manager-delete" data-index="${i}" title="Delete habit">&#10005;</button>
+        </div>
+    `).join('');
+
+    container.querySelectorAll('.habit-manager-toggle').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const idx = parseInt(btn.dataset.index);
+            habits[idx].active = !habits[idx].active;
+            btn.classList.toggle('on', habits[idx].active);
+            await API.updateHabitList(habits);
+        });
+    });
+
+    container.querySelectorAll('.habit-manager-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.index);
+            const item = btn.closest('.habit-manager-item');
+            const habit = habits[idx];
+
+            // Check if confirmation already shown
+            if (item.querySelector('.delete-confirm')) return;
+
+            const confirm = document.createElement('div');
+            confirm.className = 'delete-confirm';
+            confirm.innerHTML = `
+                <span class="delete-confirm-text">Delete "${habit.name}"?</span>
+                <button class="delete-confirm-yes">Yes, delete</button>
+                <button class="delete-confirm-no">Cancel</button>
+            `;
+            item.appendChild(confirm);
+
+            confirm.querySelector('.delete-confirm-yes').addEventListener('click', async () => {
+                await API.deleteHabit(habit.key);
+                habits.splice(idx, 1);
+                renderHabitManager(habits);
+            });
+
+            confirm.querySelector('.delete-confirm-no').addEventListener('click', () => {
+                confirm.remove();
+            });
+        });
+    });
+}
+
+function applyTheme(theme) {
+    document.body.className = '';
+    if (theme && theme !== 'dark') {
+        document.body.classList.add(`theme-${theme}`);
+    }
+}

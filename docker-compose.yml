@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    ports:
+      - "2026:2026"
+    volumes:
+      - daycore_data:/app/backend/data
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:///data/daycore.db
+      - FRONTEND_DIR=/app/frontend
+    restart: unless-stopped
+
+volumes:
+  daycore_data:

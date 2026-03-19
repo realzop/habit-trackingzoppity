@@ -142,6 +142,7 @@ function renderHabitManager(habits) {
             <span class="habit-manager-type">${h.habit_type}</span>
             <span class="habit-manager-type">${h.version}</span>
             <button class="habit-manager-toggle ${h.active ? 'on' : ''}" data-index="${i}"></button>
+            <button class="habit-manager-delete" data-index="${i}" title="Delete habit">&#10005;</button>
         </div>
     `).join('');
 
@@ -151,6 +152,36 @@ function renderHabitManager(habits) {
             habits[idx].active = !habits[idx].active;
             btn.classList.toggle('on', habits[idx].active);
             await API.updateHabitList(habits);
+        });
+    });
+
+    container.querySelectorAll('.habit-manager-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.index);
+            const item = btn.closest('.habit-manager-item');
+            const habit = habits[idx];
+
+            // Check if confirmation already shown
+            if (item.querySelector('.delete-confirm')) return;
+
+            const confirm = document.createElement('div');
+            confirm.className = 'delete-confirm';
+            confirm.innerHTML = `
+                <span class="delete-confirm-text">Delete "${habit.name}"?</span>
+                <button class="delete-confirm-yes">Yes, delete</button>
+                <button class="delete-confirm-no">Cancel</button>
+            `;
+            item.appendChild(confirm);
+
+            confirm.querySelector('.delete-confirm-yes').addEventListener('click', async () => {
+                await API.deleteHabit(habit.key);
+                habits.splice(idx, 1);
+                renderHabitManager(habits);
+            });
+
+            confirm.querySelector('.delete-confirm-no').addEventListener('click', () => {
+                confirm.remove();
+            });
         });
     });
 }

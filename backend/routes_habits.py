@@ -23,6 +23,7 @@ class HabitConfigUpdate(BaseModel):
     emoji: Optional[str] = None
     sort_order: int = 0
     active: bool = True
+    archived: bool = False
     version: str = "v1"
 
 
@@ -81,18 +82,31 @@ def get_range(days: int = 30, session: Session = Depends(get_session), _=Depends
 
 @router.get("/list")
 def get_habits(session: Session = Depends(get_session), _=Depends(get_current_session)):
-    habits = session.exec(select(HabitConfig).order_by(HabitConfig.sort_order)).all()
+    habits = session.exec(
+        select(HabitConfig).where(HabitConfig.archived == False).order_by(HabitConfig.sort_order)
+    ).all()
     return [h.model_dump() for h in habits]
 
 
 @router.post("/list")
 def update_habits(habits: list[HabitConfigUpdate], session: Session = Depends(get_session), _=Depends(get_current_session)):
-    # Remove all existing configs and replace
-    existing = session.exec(select(HabitConfig)).all()
+    # Remove only non-archived configs and replace
+    existing = session.exec(select(HabitConfig).where(HabitConfig.archived == False)).all()
     for h in existing:
         session.delete(h)
     session.commit()
     for h in habits:
         session.add(HabitConfig(**h.model_dump()))
+    session.commit()
+    return {"ok": True}
+
+
+@router.delete("/{habit_key}")
+def archive_habit(habit_key: str, session: Session = Depends(get_session), _=Depends(get_current_session)):
+    habit = session.exec(select(HabitConfig).where(HabitConfig.key == habit_key)).first()
+    if not habit:
+        raise HTTPException(status_code=404, detail="Habit not found")
+    habit.archived = True
+    habit.active = False
     session.commit()
     return {"ok": True}

@@ -7,6 +7,7 @@ from database import init_db
 from routes_auth import router as auth_router
 from routes_habits import router as habits_router
 from routes_settings import router as settings_router
+from routes_notes import router as notes_router
 
 
 @asynccontextmanager
@@ -23,6 +24,7 @@ app = FastAPI(title="DayCore", lifespan=lifespan)
 app.include_router(auth_router, prefix="/api/auth")
 app.include_router(habits_router, prefix="/api/habits")
 app.include_router(settings_router, prefix="/api/settings")
+app.include_router(notes_router, prefix="/api/notes")
 
 # Serve frontend static files
 FRONTEND_DIR = os.environ.get("FRONTEND_DIR", "/app/frontend")
@@ -34,6 +36,7 @@ app.mount("/js", StaticFiles(directory=f"{FRONTEND_DIR}/js"), name="js")
 @app.get("/")
 @app.get("/dashboard")
 @app.get("/history")
+@app.get("/notes")
 @app.get("/ai-review")
 @app.get("/settings")
 @app.get("/login")

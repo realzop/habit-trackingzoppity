@@ -6,9 +6,10 @@ async function renderDashboard() {
     app.innerHTML = '<div class="spinner" style="margin:40px auto;display:block"></div>';
 
     try {
-        const [habits, todayData] = await Promise.all([
+        const [habits, todayData, todayNote] = await Promise.all([
             API.getHabitList(),
-            API.getHabitsToday()
+            API.getHabitsToday(),
+            API.getTodayNote()
         ]);
 
         const activeHabits = habits.filter(h => h.active);
@@ -41,6 +42,22 @@ async function renderDashboard() {
                 </div>
             </div>
             <div id="habits-list"></div>
+            <div class="card notes-card" style="margin-top:20px">
+                <div class="notes-header">
+                    <span class="notes-title">Daily Note</span>
+                    <select id="note-tag" class="select note-tag-select">
+                        <option value="Personal" ${(todayNote.tag || '') === 'Personal' ? 'selected' : ''}>Personal</option>
+                        <option value="Bug" ${todayNote.tag === 'Bug' ? 'selected' : ''}>Bug</option>
+                        <option value="Idea" ${todayNote.tag === 'Idea' ? 'selected' : ''}>Idea</option>
+                        <option value="Custom" ${todayNote.tag && !['Personal','Bug','Idea'].includes(todayNote.tag) ? 'selected' : ''}>Custom</option>
+                    </select>
+                    <input type="text" id="note-tag-custom" class="input note-tag-custom ${todayNote.tag && !['Personal','Bug','Idea'].includes(todayNote.tag) ? '' : 'hidden'}" placeholder="Custom tag" value="${todayNote.tag && !['Personal','Bug','Idea'].includes(todayNote.tag) ? todayNote.tag : ''}">
+                </div>
+                <textarea id="note-text" class="input note-textarea" placeholder="Write a note for today..." rows="3">${todayNote.note || ''}</textarea>
+                <div class="note-actions">
+                    <span id="note-status" class="note-status"></span>
+                </div>
+            </div>
         `;
 
         const list = document.getElementById('habits-list');
@@ -166,6 +183,42 @@ async function renderDashboard() {
                     await save();
                 });
             });
+        }
+
+        // Daily note save logic
+        const noteTag = document.getElementById('note-tag');
+        const noteCustom = document.getElementById('note-tag-custom');
+        const noteText = document.getElementById('note-text');
+        const noteStatus = document.getElementById('note-status');
+
+        noteTag.addEventListener('change', () => {
+            noteCustom.classList.toggle('hidden', noteTag.value !== 'Custom');
+            saveNote();
+        });
+
+        let noteDebounce;
+        noteText.addEventListener('input', () => {
+            clearTimeout(noteDebounce);
+            noteDebounce = setTimeout(saveNote, 800);
+        });
+        noteCustom.addEventListener('input', () => {
+            clearTimeout(noteDebounce);
+            noteDebounce = setTimeout(saveNote, 800);
+        });
+
+        async function saveNote() {
+            const text = noteText.value.trim();
+            if (!text) return;
+            const tag = noteTag.value === 'Custom' ? (noteCustom.value.trim() || 'Custom') : noteTag.value;
+            try {
+                await API.saveNote({ note: text, tag });
+                noteStatus.textContent = 'Saved';
+                noteStatus.className = 'note-status saved';
+                setTimeout(() => { noteStatus.textContent = ''; }, 2000);
+            } catch (e) {
+                noteStatus.textContent = 'Error saving';
+                noteStatus.className = 'note-status error';
+            }
         }
 
     } catch (e) {

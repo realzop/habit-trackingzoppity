@@ -3,6 +3,7 @@ Router.register('/setup', renderSetup);
 Router.register('/login', renderLogin);
 Router.register('/dashboard', renderDashboard);
 Router.register('/history', renderHistory);
+Router.register('/notes', renderNotes);
 Router.register('/ai-review', renderAiReview);
 Router.register('/settings', renderSettings);
 Router.register('/', renderDashboard);

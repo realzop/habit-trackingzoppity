@@ -746,4 +746,240 @@ html, body {
     .add-habit-form {
         grid-template-columns: 1fr;
     }
+    .notes-toolbar {
+        flex-direction: column;
+    }
+    .notes-export {
+        width: 100%;
+    }
+    .notes-export-btn {
+        flex: 1;
+    }
+}
+
+/* Habit delete button */
+.habit-manager-delete {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.habit-manager-delete:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.delete-confirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+.habit-manager-item {
+    flex-wrap: wrap;
+}
+
+.delete-confirm-text {
+    font-size: 0.8rem;
+    color: var(--warning);
+    flex: 1;
+}
+
+.delete-confirm-yes {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--danger);
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.delete-confirm-yes:hover {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+.delete-confirm-no {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.delete-confirm-no:hover {
+    border-color: var(--text);
+    color: var(--text);
+}
+
+/* Daily notes on dashboard */
+.notes-card {
+    cursor: default;
+}
+
+.notes-card:hover {
+    background: var(--bg-card);
+}
+
+.notes-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.notes-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.8rem;
+}
+
+.note-tag-select {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    width: auto;
+}
+
+.note-tag-custom {
+    width: 120px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+}
+
+.note-textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.note-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.note-status {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    transition: all 0.2s;
+}
+
+.note-status.saved {
+    color: var(--success);
+}
+
+.note-status.error {
+    color: var(--danger);
+}
+
+/* Notes page */
+.notes-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.notes-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notes-export {
+    display: flex;
+    gap: 8px;
+}
+
+.notes-export-btn {
+    width: auto;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+}
+
+.note-entry {
+    cursor: default;
+}
+
+.note-entry:hover {
+    background: var(--bg-card-hover);
+}
+
+.note-entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.note-entry-date {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 500;
+}
+
+.note-entry-tag {
+    font-size: 0.7rem;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--accent-glow);
+    color: var(--accent);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.note-entry-tag.tag-personal {
+    background: rgba(168, 85, 247, 0.1);
+    color: var(--accent2);
+    border-color: rgba(168, 85, 247, 0.2);
+}
+
+.note-entry-tag.tag-bug {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.note-entry-tag.tag-idea {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.note-entry-content {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text);
 }

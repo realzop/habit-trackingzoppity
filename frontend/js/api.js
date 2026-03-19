@@ -89,5 +89,32 @@ const API = {
 
     async getAiReview() {
         return this.post('/api/settings/ai-review', {});
+    },
+
+    async deleteHabit(habitKey) {
+        const res = await this.fetch(`/api/habits/${habitKey}`, { method: 'DELETE' });
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.detail || 'Request failed');
+        }
+        return res.json();
+    },
+
+    async getTodayNote() {
+        return this.get('/api/notes/today');
+    },
+
+    async saveNote(entry) {
+        return this.post('/api/notes', entry);
+    },
+
+    async getNotes() {
+        return this.get('/api/notes');
+    },
+
+    async exportNotes(tag = 'all', format = 'csv') {
+        const res = await this.fetch(`/api/notes/export?tag=${encodeURIComponent(tag)}&format=${format}`);
+        if (!res.ok) throw new Error('Export failed');
+        return res;
     }
 };

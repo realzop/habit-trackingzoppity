@@ -25,6 +25,7 @@ class HabitConfig(SQLModel, table=True):
     emoji: Optional[str] = None
     sort_order: int = 0
     active: bool = True
+    archived: bool = False
     version: str = "v1"
 
 
@@ -33,6 +34,13 @@ class HabitLog(SQLModel, table=True):
     log_date: str = Field(index=True)  # YYYY-MM-DD
     habit_key: str
     value: str  # stored as string, parsed by type
+
+
+class DailyNote(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    log_date: str = Field(index=True)  # YYYY-MM-DD
+    tag: Optional[str] = None
+    note: str
 
 
 class AppSetting(SQLModel, table=True):

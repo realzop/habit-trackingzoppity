@@ -116,5 +116,15 @@ const API = {
         const res = await this.fetch(`/api/notes/export?tag=${encodeURIComponent(tag)}&format=${format}`);
         if (!res.ok) throw new Error('Export failed');
         return res;
+    },
+
+    async backupData() {
+        const res = await this.fetch('/api/settings/backup');
+        if (!res.ok) throw new Error('Backup failed');
+        return res;
+    },
+
+    async importData(data) {
+        return this.post('/api/settings/import', data);
     }
 };

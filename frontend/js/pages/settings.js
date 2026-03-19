@@ -67,6 +67,32 @@ async function renderSettings() {
                     </div>
                 </div>
             </div>
+
+            <div class="settings-section">
+                <h3>Data Management</h3>
+                <div class="card">
+                    <div id="data-msg"></div>
+                    <div class="data-actions">
+                        <button id="backup-btn" class="btn btn-secondary">Download Backup</button>
+                        <label class="btn btn-secondary import-label" for="import-file">Import Backup</label>
+                        <input type="file" id="import-file" accept=".json" style="display:none">
+                    </div>
+                    <p style="margin-top:10px;font-size:0.75rem;color:var(--text-dim)">
+                        Backup exports all your habits, logs, notes, and settings as JSON. Import merges data without overwriting existing entries.
+                    </p>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Maintenance</h3>
+                <div class="card">
+                    <div id="reset-msg"></div>
+                    <button id="force-refresh-btn" class="btn btn-secondary" style="margin-bottom:8px">Force Refresh App</button>
+                    <p style="font-size:0.75rem;color:var(--text-dim)">
+                        Clears cached files and reloads the app. Use this after an update if features are missing. Your data is never touched.
+                    </p>
+                </div>
+            </div>
         `;
 
         // Theme switching
@@ -110,6 +136,52 @@ async function renderSettings() {
 
         // Habit manager
         renderHabitManager(habits);
+
+        // Backup
+        document.getElementById('backup-btn').addEventListener('click', async () => {
+            const msg = document.getElementById('data-msg');
+            try {
+                const res = await API.backupData();
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `daycore_backup_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                msg.innerHTML = '<div class="msg msg-success">Backup downloaded</div>';
+            } catch (e) {
+                msg.innerHTML = `<div class="msg msg-error">${e.message}</div>`;
+            }
+        });
+
+        // Import
+        document.getElementById('import-file').addEventListener('change', async (e) => {
+            const msg = document.getElementById('data-msg');
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                const result = await API.importData(data);
+                const imp = result.imported;
+                msg.innerHTML = `<div class="msg msg-success">Imported: ${imp.habits} habits, ${imp.logs} logs, ${imp.notes} notes, ${imp.settings} settings</div>`;
+                e.target.value = '';
+            } catch (err) {
+                msg.innerHTML = `<div class="msg msg-error">${err.message}</div>`;
+                e.target.value = '';
+            }
+        });
+
+        // Force refresh
+        document.getElementById('force-refresh-btn').addEventListener('click', () => {
+            if ('caches' in window) {
+                caches.keys().then(names => names.forEach(name => caches.delete(name)));
+            }
+            window.location.reload(true);
+        });
 
         // Add habit
         document.getElementById('add-habit-btn').addEventListener('click', async () => {

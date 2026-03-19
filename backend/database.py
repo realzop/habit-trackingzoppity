@@ -23,8 +23,11 @@ def _migrate():
     try:
         cursor.execute("SELECT archived FROM habitconfig LIMIT 1")
     except sqlite3.OperationalError:
-        cursor.execute("ALTER TABLE habitconfig ADD COLUMN archived BOOLEAN DEFAULT 0")
-        conn.commit()
+        try:
+            cursor.execute("ALTER TABLE habitconfig ADD COLUMN archived BOOLEAN DEFAULT 0")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # Table doesn't exist yet, create_all() will handle it
     conn.close()
 
 

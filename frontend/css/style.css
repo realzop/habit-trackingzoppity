@@ -982,3 +982,24 @@ html, body {
     line-height: 1.6;
     color: var(--text);
 }
+
+/* Data management */
+.data-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.data-actions .btn {
+    flex: 1;
+}
+
+.import-label {
+    cursor: pointer;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .data-actions {
+        flex-direction: column;
+    }
+}

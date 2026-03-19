@@ -3,7 +3,7 @@ set -e
 
 echo ""
 echo "  ╔══════════════════════════════════╗"
-echo "  ║         DayCore Installer        ║"
+echo "  ║      DayCore Install / Update    ║"
 echo "  ╚══════════════════════════════════╝"
 echo ""
 
@@ -34,9 +34,23 @@ else
     echo "[=] .env already exists, keeping it"
 fi
 
-# Build and start
-echo "[+] Building and starting DayCore..."
-$COMPOSE up -d --build
+# Check if this is an update (containers already running)
+RUNNING=$($COMPOSE ps -q 2>/dev/null || true)
+
+if [ -n "$RUNNING" ]; then
+    echo "[~] Existing DayCore detected — updating..."
+    echo "[~] Your data (habits, logs, notes, password) is safe in the Docker volume."
+    echo ""
+    echo "[+] Stopping old containers..."
+    $COMPOSE down
+    echo "[+] Rebuilding with latest code (no cache)..."
+    $COMPOSE build --no-cache
+    echo "[+] Starting updated DayCore..."
+    $COMPOSE up -d
+else
+    echo "[+] Fresh install — building and starting DayCore..."
+    $COMPOSE up -d --build
+fi
 
 echo ""
 echo "  ✓ DayCore is running!"
@@ -44,11 +58,19 @@ echo ""
 echo "  Local:   http://localhost:2026"
 echo "  Network: http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '<your-ip>'):2026"
 echo ""
-echo "  First visit will ask you to set a password."
-echo ""
-echo "  ┌─────────────────────────────────────────────┐"
-echo "  │  After setting your password, go to          │"
-echo "  │  Settings → Habit Manager to rename and      │"
-echo "  │  configure your habits.                      │"
-echo "  └─────────────────────────────────────────────┘"
+
+if [ -z "$RUNNING" ]; then
+    echo "  First visit will ask you to set a password."
+    echo ""
+    echo "  ┌─────────────────────────────────────────────┐"
+    echo "  │  After setting your password, go to          │"
+    echo "  │  Settings → Habit Manager to rename and      │"
+    echo "  │  configure your habits.                      │"
+    echo "  └─────────────────────────────────────────────┘"
+else
+    echo "  ┌─────────────────────────────────────────────┐"
+    echo "  │  Update complete! Your data has been kept.   │"
+    echo "  │  Refresh your browser to see new features.   │"
+    echo "  └─────────────────────────────────────────────┘"
+fi
 echo ""

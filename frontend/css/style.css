@@ -854,11 +854,10 @@ html, body {
 
 .notes-title {
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--accent);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-size: 0.8rem;
 }
 
 .note-tag-select {
